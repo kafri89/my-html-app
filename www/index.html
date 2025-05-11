@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="screen-orientation" content="portrait">
+  <meta name="theme-color" content="#f0e6d2">
+  <link rel="preload" href="Cats Show.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="KOMIKAX_.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="Komigo3D.woff" as="font" type="font/woff" crossorigin>
+  <title>15-Puzzle Game</title>
+  <style>
+    @font-face {
+      font-family: 'Cats Show';
+      src: url('Cats Show.ttf') format('truetype'),
+        url('Cats Show.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'Komigo 3D';
+      src: url('Komigo3D.woff') format('woff'),
+        url('Komigo3D.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'Komika Axis';
+      src: url('KOMIKAX_.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    body {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+      background: linear-gradient(#eacd92 40%, white);
+      font-family: Arial, sans-serif;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .container {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      height: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .timer-container {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 10px;
+      border: 10px solid rgba(0, 0, 0, 0.245);
+      background-color: #eef0f1;
+      border-radius: 20px;
+    }
+
+    .timer,
+    .record {
+      font-family: 'Cats Show';
+      font-size: 25px;
+      font-weight: 500;
+      color: rgba(119, 128, 0, 0.69);
+      text-shadow: -5px 5px 10px rgba(0, 0, 0, 0.3);
+      margin: 5px 0;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 4.5px;
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 1/1;
+      border: 10px solid rgba(0, 0, 0, 0.245);
+      background-color: #eef0f1;
+      border-radius: 20px;
+      padding: 3px;
+    }
+
+    .tile {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid white;
+      outline: 2px solid rgba(0, 0, 0, 0.245);
+      border-radius: 7px;
+      box-shadow: -3px 3px 15px rgba(128, 128, 128, 0.5);
+      font-size: 36px;
+      font-weight: bold;
+      font-family: 'komigo 3D';
+      color: black;
+      transition: transform 0.07s ease;
+      will-change: transform;
+    }
+
+    @media (min-width: 600px) {
+      .tile {
+        font-size: 36px;
+        border-width: 6px;
+      }
+    }
+
+    .tile.empty {
+      border: none;
+      z-index: -1;
+    }
+
+    .win-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-20deg);
+      font-family: 'Komigo 3D';
+      font-size: 70px;
+      color: #ff0000;
+      display: none;
+      z-index: 100;
+      text-align: center;
+      width: 100%;
+    }
+
+    .win-state {
+      opacity: 0.07;
+      transition: opacity 0.2s ease;
+    }
+
+    @media (min-width: 600px) {
+      .win-message {
+        font-size: 70px;
+      }
+    }
+
+    .play-button {
+      font-family: 'Komika Axis';
+      font-size: 18px;
+      padding: 10px 20px;
+      background-color: rgba(119, 128, 0, 0.69);
+      color: #fff;
+      border: 2px solid black;
+      outline: 3px solid white;
+      border-radius: 30px;
+      box-shadow: -5px 5px 5px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      margin-top: 12px;
+    }
+
+    @media (min-width: 600px) {
+      .play-button {
+        font-size: 20px;
+        padding: 10px 30px;
+      }
+    }
+
+    .disabled {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    .sound-toggle {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      filter: drop-shadow(-10px 10px 15px gray);
+      transform: translateY(-50%);
+      font-size: 24px;
+      user-select: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="timer-container">
+      <div class="sound-toggle" id="soundToggle">🔊</div>
+      <div class="timer">00:00</div>
+      <div class="record">Record <span id="bestTime">--:--</span></div>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="win-message">Good Job!</div>
+
+    <button class="play-button" id="playButton">Play</button>
+
+    <audio id="moveSound" src="block.mp3" preload="auto"></audio>
+    <audio id="winSound" src="win.mp3" preload="auto"></audio>
+  </div>
+
+  <script>
+    const tileColors = [
+      '#D9E9FF', '#DAFFEB', '#D9E9FF', '#FFDBE1',
+      '#F7FFDC', '#FFDBE1', '#F7FFDC', '#D9E9FF',
+      '#DAFFEB', '#D9E9FF', '#FFDBE1', '#D9E9FF',
+      '#FFDBE1', '#DAFFEB', '#F7FFDC', '#eef0f1'
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Game elements
+      const board = document.getElementById('board');
+      const winMessage = document.querySelector('.win-message');
+      const bestTimeDisplay = document.getElementById('bestTime');
+      const playButton = document.getElementById('playButton');
+      const soundToggle = document.getElementById('soundToggle');
+      let soundEnabled = true;
+      let gameWon = false;
+      let tiles = [];
+      let tilePositions = [];
+      let startTime;
+      let timerInterval;
+      let gameActive = false;
+      let isMoving = false;
+
+      // Audio elements
+      const moveSound = document.getElementById('moveSound');
+      const winSound = document.getElementById('winSound');
+
+      // Initialize game (without starting timer)
+      function init(shouldStartTimer = false) {
+        isMoving = false;
+        board.classList.remove('win-state');
+        // Create tiles
+        board.innerHTML = '';
+        tiles = [];
+        for (let i = 0; i < 16; i++) {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          tile.dataset.index = i;
+          tile.addEventListener('click', handleTileClick);
+          board.appendChild(tile);
+          tiles.push(tile);
+        }
+
+        // Reset game state
+        gameWon = false;
+        winMessage.style.display = 'none';
+
+        // Initialize positions - solved state by default
+        const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, ''];
+
+        // Only shuffle if starting the game (Play button clicked)
+        tilePositions = shouldStartTimer ? shuffleArray(numbers) : [...numbers];
+
+        updateBoard();
+
+        // Reset timer display
+        document.querySelector('.timer').textContent = '00:00';
+
+        // Stop timer if running
+        if (timerInterval) {
+          clearInterval(timerInterval);
+        }
+
+        // Start timer if requested
+        if (shouldStartTimer) {
+          startTimer();
+        }
+
+        // Set audio properties
+        moveSound.volume = 0.4;
+        winSound.volume = 0.3;
+      }
+
+      // Shuffle array
+      function shuffleArray(array) {
+        const numbers = array.filter(tile => tile !== '');
+        for (let i = numbers.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+        }
+        const shuffled = [...numbers, ''];
+        const emptyIndex = shuffled.indexOf('');
+        const emptyRowFromBottom = 4 - Math.floor(emptyIndex / 4);
+        let inversions = 0;
+        for (let i = 0; i < shuffled.length - 1; i++) {
+          for (let j = i + 1; j < shuffled.length - 1; j++) {
+            if (shuffled[i] > shuffled[j]) inversions++;
+          }
+        }
+        const isSolvable =
+          (emptyRowFromBottom % 2 === 0 && inversions % 2 === 1) ||
+          (emptyRowFromBottom % 2 === 1 && inversions % 2 === 0);
+        if (!isSolvable) {
+          [shuffled[0], shuffled[1]] = [shuffled[1], shuffled[0]];
+        }
+        return shuffled;
+      }
+
+      // Update board display
+      function updateBoard() {
+        tiles.forEach((tile, index) => {
+          tile.textContent = tilePositions[index];
+          tile.className = tilePositions[index] === '' ? 'tile empty' : 'tile';
+          tile.style.border = tile.style.border.includes('red') ? '2px solid black' : tile.style.border;
+          tile.style.backgroundColor = tilePositions[index] === '' ? tileColors[15] : tileColors[parseInt(tilePositions[index]) - 1];
+          tile.style.transform = 'none'; // Reset transform
+        });
+      }
+
+      // Handle tile clicks
+      function handleTileClick(e) {
+        if (!gameActive || gameWon || isMoving) return; // Check isMoving
+        const tile = e.target;
+        moveTile(tile);
+      }
+
+      // Move tile to empty space
+      function moveTile(tile) {
+        if (isMoving) return; // Prevent movement if another tile is moving
+
+        const tileIndex = tiles.indexOf(tile);
+        const emptyIndex = tilePositions.indexOf('');
+
+        if (isAdjacent(tileIndex, emptyIndex)) {
+          isMoving = true; // Set flag when movement starts
+
+          if (soundEnabled) {
+            moveSound.currentTime = 0;
+            moveSound.play().catch(e => console.log("Move sound error:", e));
+          }
+
+          // Calculate the transform needed for the animation
+          const emptyRow = Math.floor(emptyIndex / 4);
+          const emptyCol = emptyIndex % 4;
+          const tileRow = Math.floor(tileIndex / 4);
+          const tileCol = tileIndex % 4;
+
+          // Apply transform to animate the movement
+          tile.style.transform = `translate(${(emptyCol - tileCol) * 100}%, ${(emptyRow - tileRow) * 100}%)`;
+
+          // After the transition completes, reset the transform and update positions
+          setTimeout(() => {
+            tile.style.transform = 'none';
+            [tilePositions[tileIndex], tilePositions[emptyIndex]] = ['', tilePositions[tileIndex]];
+            updateBoard();
+            checkWin();
+            isMoving = false; // Clear flag when movement completes
+          }, 70); // Match this duration with the CSS transition duration
+        }
+      }
+
+      // Check if tiles are adjacent
+      function isAdjacent(index1, index2) {
+        const row1 = Math.floor(index1 / 4);
+        const col1 = index1 % 4;
+        const row2 = Math.floor(index2 / 4);
+        const col2 = index2 % 4;
+        return Math.abs(row1 - row2) + Math.abs(col1 - col2) === 1;
+      }
+
+      // Check win condition
+      function checkWin() {
+        const winCondition = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', ''];
+        if (tilePositions.join(',') === winCondition.join(',')) {
+          gameWon = true;
+          stopTimer();
+          board.classList.add('win-state');
+
+          const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+          const bestTime = parseInt(localStorage.getItem('bestTime')) || Infinity;
+
+          // Check if it's a new record (strictly better than previous)
+          if (elapsedTime < bestTime) {
+            winMessage.textContent = 'New Record!';
+            localStorage.setItem('bestTime', elapsedTime);
+            displayBestTime(elapsedTime);
+          } else {
+            winMessage.textContent = 'Good Job!';
+          }
+
+          winMessage.style.display = 'block';
+
+          if (soundEnabled) {
+            winSound.currentTime = 0;
+            winSound.play().catch(e => console.log("Win sound error:", e));
+          }
+        }
+      }
+
+      // Timer functions
+      function startTimer() {
+        startTime = Date.now();
+        timerInterval = setInterval(updateTimer, 1000);
+      }
+
+      function stopTimer() {
+        clearInterval(timerInterval);
+      }
+
+      function updateTimer() {
+        const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = String(Math.floor(elapsedTime / 60)).padStart(2, '0');
+        const seconds = String(elapsedTime % 60).padStart(2, '0');
+        document.querySelector('.timer').textContent = `${minutes}:${seconds}`;
+      }
+
+      // Update best time record
+      function updateRecord() {
+        // This is now handled in checkWin()
+      }
+
+      function displayBestTime(time) {
+        const minutes = String(Math.floor(time / 60)).padStart(2, '0');
+        const seconds = String(time % 60).padStart(2, '0');
+        bestTimeDisplay.textContent = `${minutes}:${seconds}`;
+      }
+
+      // Keyboard controls
+      document.addEventListener('keydown', (e) => {
+        if (!gameActive || gameWon || isMoving) return; // Check isMoving
+
+        const emptyIndex = tilePositions.indexOf('');
+        let targetIndex;
+
+        switch (e.key) {
+          case 'ArrowUp': targetIndex = emptyIndex + 4; break;
+          case 'ArrowDown': targetIndex = emptyIndex - 4; break;
+          case 'ArrowLeft': targetIndex = emptyIndex + 1; break;
+          case 'ArrowRight': targetIndex = emptyIndex - 1; break;
+          default: return;
+        }
+
+        if (targetIndex >= 0 && targetIndex < 16) {
+          moveTile(tiles[targetIndex]);
+        }
+      });
+
+      // Play/Replay button functionality
+      playButton.addEventListener('click', (e) => {
+        if (e.shiftKey) { // Shift+Click to reset record
+          localStorage.removeItem('bestTime');
+          bestTimeDisplay.textContent = "--:--";
+          return; // Don't proceed with normal click action
+        }
+
+        if (playButton.textContent === 'Play') {
+          // Start the game
+          gameActive = true;
+          playButton.textContent = 'Replay';
+          init(true);
+        } else {
+          // Reset the game
+          gameActive = false;
+          playButton.textContent = 'Play';
+          init(false);
+        }
+      });
+
+      soundToggle.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+      });
+
+      // Initial setup (inactive state)
+      init(false);
+      displayBestTime(localStorage.getItem('bestTime') || 0);
+    });
+  </script>
+</body>
+
+</html>
