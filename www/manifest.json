@@ -16,5 +16,20 @@
       "sizes": "512x512",
       "type": "image/png"
     }
+  ],
+  // Add these (replace with actual screenshot URLs)
+  "screenshots": [
+    {
+      "src": "/my-html-app/www/screenshot1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow"  // For mobile
+    },
+    {
+      "src": "/my-html-app/www/screenshot2.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"  // For desktop
+    }
   ]
 }
